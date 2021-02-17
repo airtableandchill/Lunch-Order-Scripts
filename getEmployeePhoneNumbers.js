@@ -23,22 +23,20 @@ const scheduledEmployeePhoneNumbers = scheduledEmployeeRecords.map(record => {
 
     if (!phoneNumber) missingPhoneNumbers.push(employeeRecord.name);
 
-    return phoneNumber;
+    return {name: employeeRecord.name, phone: phoneNumber};
 });
 
 console.log(scheduledEmployeePhoneNumbers);
-console.log(missingPhoneNumbers);
+// console.log(missingPhoneNumbers);
 
 // Filter the list for employees missing phone numbers.
-const filteredEmployeePhoneNumbers = scheduledEmployeePhoneNumbers.filter(Boolean);
+const filteredEmployeePhoneNumbers = scheduledEmployeePhoneNumbers.filter(record => Boolean(record.phone));
 
 console.log(filteredEmployeePhoneNumbers);
-
  
 // Now we create our output variables
 // We create one with all phone numbers of everyone working today.
-
-output.set("Employee Phone Numbers", filteredEmployeePhoneNumbers);
+// output.set("Employee Phone Numbers", filteredEmployeePhoneNumbers);
 
 // And a separate variable to let managers know if any employees are missing phone numbers.
 output.set("Missing phone numbers", missingPhoneNumbers);
