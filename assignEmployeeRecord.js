@@ -39,7 +39,7 @@ todaysShiftsRecords.map(shiftRecord => {
 
 // Now we use the employee record ID as the value for the "Employee Record" field in the "Today's Shifts" view.
 todaysShiftsRecords.forEach(record => {
-    const hasEmployeeRecord = todaysShiftsQuery.getRecord(record.shiftID).getCellValueAsString("Employee Record") !== "Unnamed record";
+    const hasEmployeeRecord = todaysShiftsQuery.getRecord(record.shiftID).getCellValueAsString("Employee Record") !== "";
 
     if (hasEmployeeRecord) {
         // console.log(`Skipping ${record.name}`)
