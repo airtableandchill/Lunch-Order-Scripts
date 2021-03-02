@@ -1,3 +1,5 @@
+const errorsTable = base.getTable("Errors"); // Grab errors table for error logging.
+
 // Grab all employees that are working today from the "Today's Shifts" view of the Shifts table.
 const shiftsTable = base.getTable("Shifts");
 const todaysShiftsView = shiftsTable.getView("Today's Shifts");
@@ -39,7 +41,13 @@ todaysShiftsRecords.map(shiftRecord => {
 
 // Now we use the employee record ID as the value for the "Employee Record" field in the "Today's Shifts" view.
 todaysShiftsRecords.forEach(record => {
-    const hasEmployeeRecord = todaysShiftsQuery.getRecord(record.shiftID).getCellValueAsString("Employee Record") !== "";
+    let hasEmployeeRecord = true;
+
+    try {
+        hasEmployeeRecord = todaysShiftsQuery.getRecord(record.shiftID).getCellValueAsString("Employee Record") !== "";
+    } catch (error) {
+        errorsTable.createRecordAsync({ "Script Name": "assignEmployeeRecords", Message: error.message, Type: error.name, Stack: error.stack });
+    };
 
     if (hasEmployeeRecord) {
         // console.log(`Skipping ${record.name}`)
@@ -49,7 +57,7 @@ todaysShiftsRecords.forEach(record => {
         try {
             shiftsTable.updateRecordAsync(record.shiftID, { "Employee Record": [{ id: record.employeeID }] });
         } catch (error) {
-            console.error(error); // We console log this for now, but eventually we will log this error by adding a record to a new table.
+            errorsTable.createRecordAsync({ "Script Name": "assignEmployeeRecords", Message: error.message, Type: error.name, Stack: error.stack });
         }
     }
 });
