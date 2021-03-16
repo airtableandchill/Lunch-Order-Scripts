@@ -1,42 +1,42 @@
-// Grab all employees that are working today from the "Today's Shifts" view of the Shifts table.
+/*
+======================================================================
+NAME:			getEmployeePhoneNumbers.js
+PURPOSE:		After employee records are assigned to shifts, we need to grab all of their phone numbers
+                and create a new record so that whoever is doing lunch ordering has easy access to
+                employee phone numbers for everyone working today.
+
+NOTE:			This script logs errors to the Errors table.
+======================================================================
+*/
+
+const errorsTable = base.getTable("Errors"); // Grab errors table for error logging.
+
 const shiftsTable = base.getTable("Shifts");
-const shiftsTodayView = shiftsTable.getView("Today's Shifts");
-const shiftsTodayQuery = await shiftsTodayView.selectRecordsAsync({ fields: ["Event", "Employee"] });
+const todaysShiftsView = shiftsTable.getView("Today's Shifts");
+const todaysShiftsQuery = await todaysShiftsView.selectRecordsAsync({ fields: ["Shift", "Employee Record", "Cellphone"] });
 
-// Get a list of employee names for everyone that is working today
-const shiftsTodayRecords = shiftsTodayQuery.records.map(record => shiftsTodayQuery.getRecord(record.id).getCellValue("Employee"));
+const employeeInfo = todaysShiftsQuery.records.map(record => {
+    const cellphone = todaysShiftsQuery.getRecord(record.id).getCellValueAsString("Cellphone");
+    const employeeRecord = todaysShiftsQuery.getRecord(record.id).getCellValue("Employee Record");
 
-// Grab all employees from the "Employees" table.
-const employeesTable = base.getTable("Employees");
-const allEmployeesView = employeesTable.getView("All employees");
-const allEmployeesQuery = await allEmployeesView.selectRecordsAsync({ fields: ["Name", "Phone"] });
-
-// Get all employee records, then filter the results so we only have employee records for people working today!
-const scheduledEmployeeRecords = allEmployeesQuery.records.filter(record => shiftsTodayRecords.includes(record.name));
-const missingPhoneNumbers = [];
-
-// console.log("working employees", scheduledEmployeeRecords)
-
-const scheduledEmployeePhoneNumbers = scheduledEmployeeRecords.map(record => {
-    const employeeRecord = allEmployeesQuery.getRecord(record.id);
-    const phoneNumber = employeeRecord.getCellValue("Phone");
-
-    if (!phoneNumber) missingPhoneNumbers.push(employeeRecord.name);
-
-    return {name: employeeRecord.name, phone: phoneNumber};
+    return {
+        name: employeeRecord[0].name || "",
+        id: employeeRecord[0].id || null,
+        cellphone
+    }
 });
 
-console.log(scheduledEmployeePhoneNumbers);
-// console.log(missingPhoneNumbers);
+const employeePhoneNumbers = employeeInfo.filter(record => record.cellphone).map(record => record.cellphone).join(",");
+const missingPhoneNumbers = employeeInfo.filter(record => !record.cellphone).map(record => {
+    return { id: record.id };
+});
 
-// Filter the list for employees missing phone numbers.
-const filteredEmployeePhoneNumbers = scheduledEmployeePhoneNumbers.filter(record => Boolean(record.phone));
+console.log("Phone numbers", employeePhoneNumbers)
+console.log("Missing phone numbers", missingPhoneNumbers)
 
-console.log(filteredEmployeePhoneNumbers);
- 
-// Now we create our output variables
-// We create one with all phone numbers of everyone working today.
-// output.set("Employee Phone Numbers", filteredEmployeePhoneNumbers);
-
-// And a separate variable to let managers know if any employees are missing phone numbers.
-output.set("Missing phone numbers", missingPhoneNumbers);
+if (employeePhoneNumbers.length) {
+    const phoneNumbersTable = base.getTable("Phone numbers");
+    await phoneNumbersTable.createRecordAsync({ "All Phone Numbers": employeePhoneNumbers, "Missing Phone Numbers": missingPhoneNumbers })
+} else {
+    errorsTable.createRecordAsync({ "Script Name": "getEmployeePhoneNumbers", Message: "No employee phone numbers found." });
+}
