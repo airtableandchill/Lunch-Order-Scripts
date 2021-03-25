@@ -57,14 +57,17 @@ if (todaysShiftsRecords.length) {
         };
 
         if (hasEmployeeRecord) {
-            // console.log(`Skipping ${record.name}`)
             return; // If the shift already has an employee record assigned, skip it!
         } else {
             // console.log(`Updating record: ${record.name}`)
-            try {
-                shiftsTable.updateRecordAsync(record.shiftID, { "Employee Record": [{ id: record.employeeID }] });
-            } catch (error) {
-                errorsTable.createRecordAsync({ "Script Name": "assignEmployeeRecords", Message: error.message, Type: error.name, Stack: error.stack });
+            if (typeof record.employeeID === 'string') {
+                try {
+                    shiftsTable.updateRecordAsync(record.shiftID, { "Employee Record": [{ id: record.employeeID }] });
+                } catch (error) {
+                    errorsTable.createRecordAsync({ "Script Name": "assignEmployeeRecords", Message: error.message, Type: error.name, Stack: error.stack });
+                }
+            } else {
+                errorsTable.createRecordAsync({ "Script Name": "assignEmployeeRecords", Message: `${record.name} does not exist in the Employee Database`, Type: "New or missing employee" });
             }
         }
     });
