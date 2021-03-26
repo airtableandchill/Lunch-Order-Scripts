@@ -54,7 +54,7 @@ const missingPhoneNumbers = employeeInfo.filter(record => record.id && !record.c
 
 console.log("Phone numbers", employeePhoneNumbers)
 console.log("Missing phone numbers", missingPhoneNumbers)
-console.log("Employees missing from the employee database:", missingEmployees.join(" ,"));
+console.log("Employees missing from the employee database:", missingEmployees.join(", "));
 
 if (employeePhoneNumbers.length) {
     const phoneNumbersTable = base.getTable("Phone numbers");
